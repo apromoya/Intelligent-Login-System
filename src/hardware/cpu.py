@@ -1,3 +1,4 @@
+# src/hardware/cpu.py
 from .alu import ALU
 from .storage import Storage
 
@@ -9,28 +10,25 @@ class CPU:
     def fetch_decode_execute(self, datos, memoria_ram):
         username = datos.get("user")
         password_intento = datos.get("pass")
-
-        # REQUERIMIENTO 2: Contar intentos desde el inicio
-        # No importa si el usuario existe o no, el intento se registra
+        
+        # 1. Verificación de intentos en RAM
         intentos = memoria_ram.leer_intentos(username)
-        
         if intentos >= 3:
-            return "BLOQUEADO: Seguridad activada por exceso de actividad."
+            return "ERROR: Usuario bloqueado por seguridad."
 
-        # Buscamos en el almacenamiento
-        hash_real = self.storage.leer_usuario(username)
+        # 2. Leer del Storage
+        password_real = self.storage.leer_usuario(username)
         
-        # Si el usuario no existe, igual contamos el fallo para evitar rastreo
-        if not hash_real:
+        if password_real is None:
             memoria_ram.registrar_fallo(username)
             return "ERROR: Credenciales inválidas."
 
-        # REQUERIMIENTO 1: Validación real con la ALU
-        es_valido = self.alu.comparar(password_intento, hash_real)
+        # 3. Comparación directa en ALU
+        self.alu.comparar(password_intento, password_real)
 
         if self.alu.zero_flag:
             memoria_ram.resetear_intentos(username)
-            return "SUCCESS: Acceso concedido al sistema."
+            return "SUCCESS: Acceso concedido."
         else:
             nuevo_conteo = memoria_ram.registrar_fallo(username)
             return f"ERROR: Credenciales inválidas. (Intento {nuevo_conteo}/3)"
