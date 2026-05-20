@@ -1,5 +1,6 @@
 import json
 import os
+import bcrypt
 
 class Storage:
     def __init__(self):
@@ -32,14 +33,14 @@ class Storage:
             print("[ERROR DE HARDWARE]: Sectores de disco corruptos (JSON mal formado).")
             return None
 
-    def escribir_usuario(self, usuario, hash_nuevo):
+    def escribir_usuario(self, usuario, hash_bcrypt):
         """
-        Operación de escritura (Opcional por si quieres registrar nuevos usuarios).
+        Operación de escritura — almacena el hash bcrypt del usuario.
         """
         try:
             with open(self.path, 'r+') as archivo:
                 datos = json.load(archivo)
-                datos[usuario] = hash_nuevo
+                datos[usuario] = hash_bcrypt
                 archivo.seek(0)
                 json.dump(datos, archivo, indent=4)
                 archivo.truncate()
@@ -47,3 +48,11 @@ class Storage:
         except Exception as e:
             print(f"[ERROR]: Fallo en la escritura de disco: {e}")
             return False
+
+    def registrar_usuario(self, usuario, password_plano):
+        """
+        Hashea la contraseña con bcrypt (salt automático, 12 rondas)
+        y la persiste en el almacenamiento.
+        """
+        hash_pwd = bcrypt.hashpw(password_plano.encode("utf-8"), bcrypt.gensalt(rounds=12))
+        return self.escribir_usuario(usuario, hash_pwd.decode("utf-8"))

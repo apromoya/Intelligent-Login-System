@@ -1,4 +1,5 @@
 # src/hardware/alu.py
+import bcrypt
 
 class ALU:
     def __init__(self):
@@ -6,11 +7,16 @@ class ALU:
 
     def comparar(self, dato_a, dato_b):
         """
-        Comparación simple de texto plano (Arquitectura básica).
+        Verificación segura mediante bcrypt.checkpw.
+        dato_a: contraseña ingresada (texto plano)
+        dato_b: hash bcrypt almacenado en disco
         """
-        if dato_a == dato_b:
-            self.zero_flag = True
-        else:
+        try:
+            self.zero_flag = bcrypt.checkpw(
+                dato_a.encode("utf-8"),
+                dato_b.encode("utf-8")
+            )
+        except Exception:
             self.zero_flag = False
-        
+
         return self.zero_flag
